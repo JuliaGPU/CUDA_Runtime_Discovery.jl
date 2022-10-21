@@ -486,7 +486,8 @@ export ptxas, nvdisasm, nvlink, compute_sanitizer,
 function __init__()
     dirs = find_toolkit()
     if isempty(dirs)
-        error("No CUDA toolkit found")
+        @debug("No CUDA toolkit found")
+        return
     end
 
     try
