@@ -167,7 +167,7 @@ function find_binary(name::String; locations::Vector{String}=String[])
         end
     end
 
-    @debug "Did not find $path"
+    @debug "Did not find $name"
     return nothing
 end
 
