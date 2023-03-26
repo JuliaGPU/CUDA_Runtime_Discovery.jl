@@ -247,10 +247,16 @@ function find_cuda_binary(toolkit_dirs::Vector{String}, name::String)
     # figure out the location
     locations = toolkit_dirs
     ## compute-sanitizer is in the "extras" directory of the toolkit
+    ## NVHPC has it in the top-level directory
     if name == "compute-sanitizer"
         toolkit_extras_dirs = filter(dir->isdir(joinpath(dir, "extras")), toolkit_dirs)
         sanitizer_dirs = map(dir->joinpath(dir, "extras", "compute-sanitizer"), toolkit_extras_dirs)
+
+        toolkit_sanitizer_dirs = filter(dir->isdir(joinpath(dir, "compute-sanitizer")), toolkit_dirs)
+        sanitizer_dirs_other =  map(dir->joinpath(dir, "compute-sanitizer"), toolkit_sanitizer_dirs)
+
         append!(locations, sanitizer_dirs)
+        append!(locations, sanitizer_dirs_other)
     end
 
     find_binary(name; locations)
