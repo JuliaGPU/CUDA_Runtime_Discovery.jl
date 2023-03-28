@@ -433,15 +433,6 @@ end
 # load-time initialization
 #
 
-macro set_global(name::Symbol, value)
-    return quote
-        _value = $(esc(value))
-        if _value !== nothing
-            global $name = _value
-        end
-    end
-end
-
 function get_binary(dirs, name; optional=false)
     path = find_cuda_binary(dirs, name)
     if path !== nothing
@@ -498,26 +489,26 @@ function __init__()
 
     try
         # binaries
-        @set_global ptxas_path get_binary(dirs, "ptxas")
-        @set_global nvdisasm_path get_binary(dirs, "nvdisasm")
-        @set_global nvlink_path get_binary(dirs, "nvlink")
-        @set_global compute_sanitizer_path get_binary(dirs, "compute-sanitizer")
+        global ptxas_path = get_binary(dirs, "ptxas")
+        global nvdisasm_path = get_binary(dirs, "nvdisasm")
+        global nvlink_path = get_binary(dirs, "nvlink")
+        global compute_sanitizer_path = get_binary(dirs, "compute-sanitizer")
 
         # libraries
-        @set_global libcudart get_library(dirs, "cudart")
-        @set_global libnvvm get_library(dirs, "nvvm"; optional=true)
-        @set_global libcufft get_library(dirs, "cufft")
-        @set_global libcublas get_library(dirs, "cublas")
-        @set_global libcusparse get_library(dirs, "cusparse")
-        @set_global libcusolver get_library(dirs, "cusolver")
-        @set_global libcusolverMg get_library(dirs, "cusolverMg")
-        @set_global libcurand get_library(dirs, "curand")
-        @set_global libcupti get_library(dirs, "cupti")
-        @set_global libnvtoolsext get_library(dirs, "nvToolsExt")
+        global libcudart = get_library(dirs, "cudart")
+        global libnvvm = get_library(dirs, "nvvm"; optional=true)
+        global libcufft = get_library(dirs, "cufft")
+        global libcublas = get_library(dirs, "cublas")
+        global libcusparse = get_library(dirs, "cusparse")
+        global libcusolver = get_library(dirs, "cusolver")
+        global libcusolverMg = get_library(dirs, "cusolverMg")
+        global libcurand = get_library(dirs, "curand")
+        global libcupti = get_library(dirs, "cupti")
+        global libnvtoolsext = get_library(dirs, "nvToolsExt")
 
         # files
-        @set_global libcudadevrt get_libcudadevrt(dirs)
-        @set_global libdevice get_libdevice(dirs)
+        global libcudadevrt = get_libcudadevrt(dirs)
+        global libdevice = get_libdevice(dirs)
 
         available[] = true
     catch err
