@@ -115,9 +115,11 @@ function find_library(name::String, versions::Vector=[];
     for location in locations
         push!(all_locations, location)
         push!(all_locations, joinpath(location, "lib"))
+        push!(all_locations, joinpath(location, "nvvm", "lib"))
         if Sys.WORD_SIZE == 64
             push!(all_locations, joinpath(location, "lib64"))
             push!(all_locations, joinpath(location, "libx64"))
+            push!(all_locations, joinpath(location, "nvvm", "lib64"))
         end
         if Sys.iswindows()
             push!(all_locations, joinpath(location, "bin"))
