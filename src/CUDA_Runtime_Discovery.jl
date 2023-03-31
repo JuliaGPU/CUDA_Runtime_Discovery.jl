@@ -123,6 +123,9 @@ function find_library(name::String, versions::Vector=[];
             push!(all_locations, joinpath(location, "bin"))
             push!(all_locations, joinpath(location, "bin", Sys.WORD_SIZE==64 ? "x64" : "Win32"))
         end
+        if Sys.islinux()
+            push!(all_locations, joinpath(location, "targets", "$(Sys.ARCH)-linux", "lib")) # NVHPC SDK
+        end
     end
 
     @debug "Looking for library $name, $(join_versions(versions)), $(join_locations(locations))" all_names all_locations
@@ -412,6 +415,9 @@ function find_libcudadevrt(toolkit_dirs)
             push!(all_locations, joinpath(location, "lib"))
             if Sys.WORD_SIZE == 64
                 push!(all_locations, joinpath(location, "lib64"))
+            end
+            if Sys.islinux()
+                push!(all_locations, joinpath(location, "targets", "$(Sys.ARCH)-linux", "lib")) # NVHPC SDK
             end
         end
     end
