@@ -478,7 +478,7 @@ is_available() = available[]
 
 export ptxas, nvdisasm, nvlink, compute_sanitizer,
        libcudart, libnvvm, libcufft, libcublas, libcusparse, libcusolver, libcusolverMg, libcurand, libcupti, libnvtoolsext,
-       libcudadevrt, libdevice
+       libcudadevrt, libdevice, libnvperf_host, libnvperf_target
 
 function __init__()
     dirs = find_toolkit()
@@ -504,6 +504,8 @@ function __init__()
         global libcusolverMg = get_library(dirs, "cusolverMg")
         global libcurand = get_library(dirs, "curand")
         global libcupti = get_library(dirs, "cupti")
+        global libnvperf_host = get_library(dirs, "nvperf_host")
+        global libnvperf_target = get_library(dirs, "nvperf_target")
         global libnvtoolsext = get_library(dirs, "nvToolsExt")
 
         # files
