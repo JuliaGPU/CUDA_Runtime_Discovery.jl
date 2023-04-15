@@ -1,7 +1,7 @@
 name = "CUDA_Runtime_Discovery"
 uuid = "1af6417a-86b4-443c-805f-a4643ffb695f"
 authors = ["Tim Besard <tim.besard@gmail.com>"]
-version = "0.2.1"
+version = "0.2.2"
 
 [deps]
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
