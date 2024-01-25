@@ -8,12 +8,14 @@ using Libdl
 #
 
 function resolve(path)
-    if islink(path)
+    resolves = 0
+    while islink(path) && resolves < 10
+        resolves += 1
         dir = dirname(path)
-        resolve(joinpath(dir, readlink(path)))
-    else
-        path
+        path = resolve(joinpath(dir, readlink(path)))
     end
+
+    return path
 end
 
 # return a list of valid directories, resolving symlinks and pruning duplicates
