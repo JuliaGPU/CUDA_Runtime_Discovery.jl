@@ -373,6 +373,12 @@ function find_libdevice(toolkit_dirs)
         push!(dirs, joinpath(toolkit_dir, "libdevice"))
         push!(dirs, joinpath(toolkit_dir, "nvvm", "libdevice"))
     end
+    ## look via nvcc
+    nvcc = find_cuda_binary(toolkit_dirs, "nvcc")
+    if nvcc !== nothing
+        nvcc = resolve(nvcc)
+        push!(dirs, joinpath(dirname(nvcc), "..", "nvvm", "libdevice"))
+    end
 
     # filter
     dirs = valid_dirs(dirs)
