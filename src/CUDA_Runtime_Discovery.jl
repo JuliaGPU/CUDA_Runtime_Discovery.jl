@@ -130,7 +130,7 @@ function find_library(name::String, versions::Vector=[];
         if Sys.islinux()
             arch = Sys.ARCH == :powerpc64le ? :ppc64le :
                    Sys.ARCH == :aarch64 ? :sbsa :
-                   Sys.ARCH            
+                   Sys.ARCH
             push!(all_locations, joinpath(location, "targets", "$arch-linux", "lib")) # NVHPC SDK
         end
     end
@@ -397,7 +397,7 @@ Look for the CUDA device runtime library in any of the CUDA toolkit directories
 """
 function find_libcudadevrt(toolkit_dirs)
     locations = toolkit_dirs
-    @debug "Request to look for libcudadevrt " locations
+    @debug "Request to look for libcudadevrt" locations
 
     name = nothing
     if Sys.isunix()
