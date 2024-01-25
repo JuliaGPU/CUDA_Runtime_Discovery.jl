@@ -8,12 +8,14 @@ using Libdl
 #
 
 function resolve(path)
-    if islink(path)
+    resolves = 0
+    while islink(path) && resolves < 10
+        resolves += 1
         dir = dirname(path)
-        resolve(joinpath(dir, readlink(path)))
-    else
-        path
+        path = resolve(joinpath(dir, readlink(path)))
     end
+
+    return path
 end
 
 # return a list of valid directories, resolving symlinks and pruning duplicates
@@ -128,7 +130,7 @@ function find_library(name::String, versions::Vector=[];
         if Sys.islinux()
             arch = Sys.ARCH == :powerpc64le ? :ppc64le :
                    Sys.ARCH == :aarch64 ? :sbsa :
-                   Sys.ARCH            
+                   Sys.ARCH
             push!(all_locations, joinpath(location, "targets", "$arch-linux", "lib")) # NVHPC SDK
         end
     end
@@ -371,6 +373,12 @@ function find_libdevice(toolkit_dirs)
         push!(dirs, joinpath(toolkit_dir, "libdevice"))
         push!(dirs, joinpath(toolkit_dir, "nvvm", "libdevice"))
     end
+    ## look via nvcc
+    nvcc = find_cuda_binary(toolkit_dirs, "nvcc")
+    if nvcc !== nothing
+        nvcc = resolve(nvcc)
+        push!(dirs, joinpath(dirname(nvcc), "..", "nvvm", "libdevice"))
+    end
 
     # filter
     dirs = valid_dirs(dirs)
@@ -395,7 +403,7 @@ Look for the CUDA device runtime library in any of the CUDA toolkit directories
 """
 function find_libcudadevrt(toolkit_dirs)
     locations = toolkit_dirs
-    @debug "Request to look for libcudadevrt " locations
+    @debug "Request to look for libcudadevrt" locations
 
     name = nothing
     if Sys.isunix()
