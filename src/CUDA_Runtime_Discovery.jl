@@ -470,8 +470,15 @@ function get_binary(dirs, name; optional=false)
 end
 
 function get_library(dirs, name; optional=false)
-    versions = cuda_library_versions(name)
-    path = find_cuda_library(dirs, name, versions)
+    # start by looking for an unversioned library
+    path = find_cuda_library(dirs, name, [])
+
+    # if that fails, try all known versions
+    if path === nothing
+        versions = cuda_library_versions(name)
+        path = find_cuda_library(dirs, name, versions)
+    end
+
     if path !== nothing
         Libdl.dlopen(path)
         return path
