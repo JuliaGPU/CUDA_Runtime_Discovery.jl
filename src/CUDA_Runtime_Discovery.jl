@@ -24,12 +24,12 @@ function valid_dirs(dirs)
     filter(isdir, unique(dirs))
 end
 
-function join_versions(versions)
+function join_versions(versions::Vector)
     isempty(versions) && return "no specific version"
     "version " * join(versions, " or ")
 end
 
-function join_locations(locations)
+function join_locations(locations::Vector)
     isempty(locations) && return "in no specific location"
     "in " * join(locations, " or ")
 end
