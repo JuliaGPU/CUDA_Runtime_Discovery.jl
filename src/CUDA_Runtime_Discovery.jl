@@ -117,11 +117,9 @@ function find_library(name::String, versions::Vector=[];
     for location in locations
         push!(all_locations, location)
         push!(all_locations, joinpath(location, "lib"))
-        push!(all_locations, joinpath(location, "nvvm", "lib"))
         if Sys.WORD_SIZE == 64
             push!(all_locations, joinpath(location, "lib64"))
             push!(all_locations, joinpath(location, "libx64"))
-            push!(all_locations, joinpath(location, "nvvm", "lib64"))
         end
         if Sys.iswindows()
             push!(all_locations, joinpath(location, "bin"))
@@ -231,7 +229,7 @@ end
 # and passing the (optional) toolkit dirs as locations.
 function find_cuda_library(toolkit_dirs::Vector{String}, library::String, versions::Vector)
     # figure out the location
-    locations = toolkit_dirs
+    locations = copy(toolkit_dirs)
     ## CUPTI is in the "extras" directory of the toolkit
     if library == "cupti"
         toolkit_extras_dirs = filter(dir->isdir(joinpath(dir, "extras")), toolkit_dirs)
@@ -249,6 +247,12 @@ function find_cuda_library(toolkit_dirs::Vector{String}, library::String, versio
             @debug "Looking for NVTX library in the default directory" dir
         end
         isdir(dir) && push!(locations, dir)
+    end
+    ## NVVM-related libraries can be in a separate directory
+    if library == "nvvm"
+        for toolkit_dir in toolkit_dirs
+            push!(locations, joinpath(toolkit_dir, "nvvm"))
+        end
     end
 
     find_library(library, versions; locations)
