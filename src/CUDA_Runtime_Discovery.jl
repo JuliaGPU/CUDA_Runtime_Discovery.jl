@@ -409,6 +409,8 @@ function find_libcudadevrt(toolkit_dirs)
     locations = toolkit_dirs
     @debug "Request to look for libcudadevrt" locations
 
+    # TODO: refactor this into find_static_library if we ever need to discover more
+
     name = nothing
     if Sys.isunix()
         name = "libcudadevrt.a"
