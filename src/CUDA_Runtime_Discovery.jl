@@ -189,40 +189,35 @@ const cuda_releases = [v"9.0", v"9.1", v"9.2",
 
 # return possible versions of a CUDA library
 function cuda_library_versions(name::String)
-    if Sys.iswindows()
-        # CUDA libraries on Windows are always versioned, however, we don't
-        # know which version we're looking for (and we don't first want to
-        # figure that out by, say, invoking a versionless binary like ptxas).
+    # we don't know which version we're looking for (and we don't first want to figure
+    # that out by, say, invoking a versionless binary like ptxas), so try all known versions
 
-        # start out with all known CUDA releases
-        versions = Any[cuda_releases...]
+    # start out with all known CUDA releases
+    versions = Any[cuda_releases...]
 
-        # append some future releases
-        for major in last(versions).major:15, minor in 1:10
-            version = VersionNumber(major, minor)
-            if !in(version, versions)
-                push!(versions, version)
-            end
+    # append some future releases
+    last_major = last(versions).major
+    for major in last_major:(last_major+2), minor in 1:10
+        version = VersionNumber(major, minor)
+        if !in(version, versions)
+            push!(versions, version)
         end
-
-        # CUPTI is special, and uses a dot-separated, year-based versioning
-        if name == "cupti"
-            for year in 2020:2022, major in 1:5, minor in 0:3
-                version = "$year.$major.$minor"
-                push!(versions, version)
-            end
-        end
-
-        # NVTX is special, and only uses a single digit
-        if name == "nvToolsExt"
-            append!(versions, [v"1", v"2"])
-        end
-
-        versions
-    else
-        # only consider unversioned libraries on other platforms.
-        []
     end
+
+    # CUPTI is special, and uses a dot-separated, year-based versioning
+    if name == "cupti"
+        for year in 2020:2025, major in 1:5, minor in 0:3
+            version = "$year.$major.$minor"
+            push!(versions, version)
+        end
+    end
+
+    # NVTX is special, and only uses a single digit
+    if name == "nvToolsExt"
+        append!(versions, [v"1", v"2"])
+    end
+
+    versions
 end
 
 # simplified find_library/find_binary entry-points,
