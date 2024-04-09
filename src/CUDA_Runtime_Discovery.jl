@@ -351,7 +351,11 @@ function find_toolkit()
 
     # filter
     dirs = valid_dirs(dirs)
-    @debug "Found CUDA toolkit at $(join(dirs, ", "))"
+    if isempty(dirs)
+        @debug "Could not find CUDA toolkit"
+    else
+        @debug "Found CUDA toolkit at $(join(dirs, ", "))"
+    end
     return dirs
 end
 
@@ -504,10 +508,7 @@ export ptxas, nvdisasm, nvlink, compute_sanitizer,
 
 function __init__()
     dirs = find_toolkit()
-    if isempty(dirs)
-        @debug("No CUDA toolkit found")
-        return
-    end
+    isempty(dirs) && return
 
     try
         # binaries
