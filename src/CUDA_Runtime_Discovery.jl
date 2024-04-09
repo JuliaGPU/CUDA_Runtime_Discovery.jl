@@ -184,7 +184,8 @@ end
 
 const cuda_releases = [v"9.0", v"9.1", v"9.2",
                        v"10.0", v"10.1", v"10.2",
-                       v"11.0", v"11.1", v"11.2", v"11.3", v"11.4", v"11.5", v"11.6", v"11.7", v"11.8"]
+                       v"11.0", v"11.1", v"11.2", v"11.3", v"11.4", v"11.5", v"11.6", v"11.7", v"11.8",
+                       v"12.0", v"12.1", v"12.2", v"12.3", v"12.4"]
 
 # return possible versions of a CUDA library
 function cuda_library_versions(name::String)
