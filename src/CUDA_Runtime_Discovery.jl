@@ -511,9 +511,9 @@ end
 const available = Ref{Bool}(false)
 is_available() = available[]
 
-export ptxas, nvdisasm, nvlink, compute_sanitizer,
-       libcudart, libnvvm, libcufft, libcublas, libcusparse, libcusolver, libcusolverMg, libcurand, libcupti, libnvtoolsext,
-       libcudadevrt, libdevice, libnvperf_host, libnvperf_target
+export ptxas, nvdisasm, nvlink,
+       libcudart, libcufft, libcublas, libcusparse, libcusolver, libcusolverMg, libcurand,
+       libcupti, libnvtoolsext, libcudadevrt, libdevice, libnvperf_host, libnvperf_target
 
 function __init__()
     dirs = find_toolkit()
@@ -528,7 +528,6 @@ function __init__()
 
         # libraries
         global libcudart = get_library(dirs, "cudart")
-        global libnvvm = get_library(dirs, "nvvm"; optional=true)
         global libcufft = get_library(dirs, "cufft")
         global libcublas = get_library(dirs, "cublas")
         global libcusparse = get_library(dirs, "cusparse")
@@ -546,11 +545,15 @@ function __init__()
 
         available[] = true
     catch err
-        @debug "Could not discover CUDA toolkit" exception=(err, catch_backtrace())
+        @error """Could not (fully) discover the local CUDA toolkit; one or more pieces may be missing.
+                  See the exception below. For even more information, run with `JULIA_DEBUG=CUDA_Runtime_Discovery`.
+
+                  It may be helpful to set the CUDA_PATH/CUDA_HOME/CUDA_ROOT environment variable
+                  and point it to the root of your CUDA toolkit installation.""" exception=(err, catch_backtrace())
     end
 end
 
-for binary in ["ptxas", "nvdisasm", "nvlink", "compute_sanitizer"]
+for binary in ["ptxas", "nvdisasm", "nvlink"]
     name = Symbol(binary)
     path = Symbol(binary, "_path")
     @eval begin
