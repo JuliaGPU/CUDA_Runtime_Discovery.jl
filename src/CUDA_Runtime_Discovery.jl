@@ -212,11 +212,6 @@ function cuda_library_versions(name::String)
         end
     end
 
-    # NVTX is special, and only uses a single digit
-    if name == "nvToolsExt"
-        append!(versions, [v"1", v"2"])
-    end
-
     versions
 end
 
@@ -231,18 +226,6 @@ function find_cuda_library(toolkit_dirs::Vector{String}, library::String, versio
         toolkit_extras_dirs = filter(dir->isdir(joinpath(dir, "extras")), toolkit_dirs)
         cupti_dirs = map(dir->joinpath(dir, "extras", "CUPTI"), toolkit_extras_dirs)
         append!(locations, cupti_dirs)
-    end
-    ## NVTX is located in an entirely different location on Windows
-    if library == "nvToolsExt" && Sys.iswindows()
-        if haskey(ENV, "NVTOOLSEXT_PATH")
-            dir = ENV["NVTOOLSEXT_PATH"]
-            @debug "Looking for NVTX library via environment variable" dir
-        else
-            program_files = ENV[Sys.WORD_SIZE == 64 ? "ProgramFiles" : "ProgramFiles(x86)"]
-            dir = joinpath(program_files, "NVIDIA Corporation", "NvToolsExt")
-            @debug "Looking for NVTX library in the default directory" dir
-        end
-        isdir(dir) && push!(locations, dir)
     end
     ## NVVM-related libraries can be in a separate directory
     if library == "nvvm"
@@ -513,7 +496,7 @@ is_available() = available[]
 
 export ptxas, nvdisasm, nvlink,
        libcudart, libcufft, libcublas, libcusparse, libcusolver, libcusolverMg, libcurand,
-       libcupti, libnvtoolsext, libcudadevrt, libdevice, libnvperf_host, libnvperf_target
+       libcupti, libcudadevrt, libdevice, libnvperf_host, libnvperf_target
 
 function __init__()
     dirs = find_toolkit()
@@ -537,7 +520,6 @@ function __init__()
         global libcupti = get_library(dirs, "cupti")
         global libnvperf_host = get_library(dirs, "nvperf_host")
         global libnvperf_target = get_library(dirs, "nvperf_target")
-        global libnvtoolsext = get_library(dirs, "nvToolsExt")
 
         # files
         global libcudadevrt = get_libcudadevrt(dirs)
