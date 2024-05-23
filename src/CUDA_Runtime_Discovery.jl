@@ -495,8 +495,9 @@ const available = Ref{Bool}(false)
 is_available() = available[]
 
 export ptxas, nvdisasm, nvlink,
-       libcudart, libcufft, libcublas, libcusparse, libcusolver, libcusolverMg, libcurand,
-       libcupti, libcudadevrt, libdevice, libnvperf_host, libnvperf_target
+       libcudart, libcudadevrt,
+       libcupti, libdevice, libnvperf_host, libnvperf_target,
+       libcufft, libcublas, libcublasLt, libcusparse, libcusolver, libcusolverMg, libcurand
 
 function __init__()
     dirs = find_toolkit()
@@ -513,6 +514,7 @@ function __init__()
         global libcudart = get_library(dirs, "cudart")
         global libcufft = get_library(dirs, "cufft")
         global libcublas = get_library(dirs, "cublas")
+        global libcublasLt = get_library(dirs, "cublasLt")
         global libcusparse = get_library(dirs, "cusparse")
         global libcusolver = get_library(dirs, "cusolver")
         global libcusolverMg = get_library(dirs, "cusolverMg")
