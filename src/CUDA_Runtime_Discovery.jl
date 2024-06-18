@@ -221,8 +221,8 @@ end
 function find_cuda_library(toolkit_dirs::Vector{String}, library::String, versions::Vector)
     # figure out the location
     locations = copy(toolkit_dirs)
-    ## CUPTI is in the "extras" directory of the toolkit
-    if library == "cupti"
+    ## CUPTI (and related libraries) are in the "extras" directory of the toolkit
+    if library in ("cupti", "nvperf_host", "nvperf_target")
         toolkit_extras_dirs = filter(dir->isdir(joinpath(dir, "extras")), toolkit_dirs)
         cupti_dirs = map(dir->joinpath(dir, "extras", "CUPTI"), toolkit_extras_dirs)
         append!(locations, cupti_dirs)
