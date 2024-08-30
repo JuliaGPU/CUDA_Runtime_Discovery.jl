@@ -265,6 +265,41 @@ function has_version_like_name(path)
     return true
 end
 
+function get_version_preference()
+    prefs = get(Base.get_preferences(), "CUDA_Runtime_jll", nothing)
+    isnothing(prefs) && return nothing
+    return get(prefs, "version", nothing)
+end
+
+function get_cuda_path_from_nvhpc_root(nvhpc_root)
+    # try to go from NVHPC_ROOT -> NVHPC_ROOT/cuda/X.Y
+    nvhpc_cuda = joinpath(nvhpc_root, "cuda")
+    if ispath(nvhpc_cuda)
+        ver = get_version_preference()
+        if !isnothing(ver)
+            p = joinpath(nvhpc_cuda, ver)
+            if ispath(p)
+                @debug "Deduced CUDA toolkit path $p from environment variable NVHPC_ROOT + set version preference ($ver) for CUDA_Runtime_jll"
+                return p
+            else
+                @debug "Couldn't deduce a valid CUDA toolkit path from environment variable NVHPC_ROOT + set version preference ($ver) for CUDA_Runtime_jll"
+            end
+        end
+
+        paths = filter(has_version_like_name, readdir(nvhpc_cuda, join=true))
+        if length(paths) > 1
+            @debug "Couldn't deduce a unique CUDA toolkit path from environment variable NVHPC_ROOT"
+        else
+            p = only(paths)
+            @debug "Deduced CUDA toolkit path $p from environment variable NVHPC_ROOT"
+            return p
+        end
+    else
+        @debug "Couldn't deduce CUDA toolkit path from environment variable NVHPC_ROOT"
+    end
+    return nothing
+end
+
 """
     find_toolkit()::Vector{String}
 
@@ -285,19 +320,9 @@ function find_toolkit()
     if !isempty(envvars)
         paths = unique(map(envvars) do var
             if var == "NVHPC_ROOT"
-                # try to go from NVHPC_ROOT -> NVHPC_ROOT/cuda/X.Y
-                nvhpc_cuda = joinpath(ENV[var], "cuda")
-                if ispath(nvhpc_cuda)
-                    paths = filter(has_version_like_name, readdir(nvhpc_cuda, join=true))
-                    if length(paths) > 1
-                        @debug "Couldn't deduce a unique CUDA toolkit path from environment variable NVHPC_ROOT"
-                    else
-                        p = only(paths)
-                        @debug "Deduced CUDA toolkit path $p from environment variable NVHPC_ROOT"
-                        return p
-                    end
-                else
-                    @debug "Couldn't deduce CUDA toolkit path from environment variable NVHPC_ROOT"
+                p = get_cuda_path_from_nvhpc_root(ENV["NVHPC_ROOT"])
+                if !isnothing(p)
+                    return p
                 end
             end
             return ENV[var]
