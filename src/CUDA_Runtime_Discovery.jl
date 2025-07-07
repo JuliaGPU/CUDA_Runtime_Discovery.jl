@@ -396,103 +396,6 @@ function find_toolkit()
     return dirs
 end
 
-"""
-    find_libdevice(toolkit_dirs::Vector{String})
-
-Look for the CUDA device library supporting `targets` in any of the CUDA toolkit directories
-`toolkit_dirs`. On CUDA >= 9.0, a single library unified library is discovered and returned
-as a string. On older toolkits, individual libraries for each of the targets are returned as
-a vector of strings.
-"""
-function find_libdevice(toolkit_dirs)
-    @debug "Request to look for libdevice" locations=toolkit_dirs
-
-    # figure out locations
-    dirs = String[]
-    for toolkit_dir in toolkit_dirs
-        push!(dirs, toolkit_dir)
-        push!(dirs, joinpath(toolkit_dir, "libdevice"))
-        push!(dirs, joinpath(toolkit_dir, "nvvm", "libdevice"))
-    end
-    ## look via nvcc
-    nvcc = find_cuda_binary(toolkit_dirs, "nvcc")
-    if nvcc !== nothing
-        nvcc = resolve(nvcc)
-        push!(dirs, joinpath(dirname(nvcc), "..", "nvvm", "libdevice"))
-    end
-
-    # filter
-    dirs = valid_dirs(dirs)
-    @debug "Look for libdevice" locations=dirs
-
-    for dir in dirs
-        path = joinpath(dir, "libdevice.10.bc")
-        if isfile(path)
-            @debug "Found unified device library at $path"
-            return path
-        end
-    end
-
-    return nothing
-end
-
-"""
-    find_libcudadevrt(toolkit_dirs::Vector{String})
-
-Look for the CUDA device runtime library in any of the CUDA toolkit directories
-`toolkit_dirs`.
-"""
-function find_libcudadevrt(toolkit_dirs)
-    locations = toolkit_dirs
-    @debug "Request to look for libcudadevrt" locations
-
-    # TODO: refactor this into find_static_library if we ever need to discover more
-
-    name = nothing
-    if Sys.isunix()
-        name = "libcudadevrt.a"
-    elseif Sys.iswindows()
-        name = "cudadevrt.lib"
-    else
-        error("No support for discovering the CUDA device runtime library on your platform, please file an issue.")
-    end
-
-    # figure out locations
-    all_locations = String[]
-    for location in locations
-        push!(all_locations, location)
-        if Sys.iswindows()
-            if Sys.WORD_SIZE == 64
-                push!(all_locations, joinpath(location, "lib", "x64"))
-            elseif Sys.WORD_SIZE == 32
-                push!(all_locations, joinpath(location, "lib", "Win32"))
-            end
-        else
-            push!(all_locations, joinpath(location, "lib"))
-            if Sys.WORD_SIZE == 64
-                push!(all_locations, joinpath(location, "lib64"))
-            end
-            if Sys.islinux()
-                arch = Sys.ARCH == :powerpc64le ? :ppc64le :
-                       Sys.ARCH == :aarch64 ? :sbsa :
-                       Sys.ARCH
-                push!(all_locations, joinpath(location, "targets", "$arch-linux", "lib")) # NVHPC SDK
-            end
-        end
-    end
-
-    @debug "Looking for CUDA device runtime library $name" locations=all_locations
-    paths = filter(isfile, map(location->joinpath(location, name), all_locations))
-
-    if isempty(paths)
-        return nothing
-    else
-        path = first(paths)
-        @debug "Found CUDA device runtime library $(basename(path)) at $(dirname(path))"
-        return path
-    end
-end
-
 
 #
 # load-time initialization
@@ -527,30 +430,10 @@ function get_library(dirs, name; optional=false)
     end
 end
 
-function get_libcudadevrt(dirs)
-    path = find_libcudadevrt(dirs)
-    if path !== nothing
-        return path
-    else
-        error("Could not find libcudadevrt in your local CUDA installation.")
-    end
-end
-
-function get_libdevice(dirs)
-    path = find_libdevice(dirs)
-    if path !== nothing
-        return path
-    else
-        error("Could not find libdevice in your local CUDA installation.")
-    end
-end
-
 const available = Ref{Bool}(false)
 is_available() = available[]
 
-export ptxas, nvdisasm, nvlink,
-       libcudart, libcudadevrt,
-       libcupti, libdevice, libnvperf_host, libnvperf_target,
+export libcudart, libcupti, libnvperf_host, libnvperf_target,
        libcufft, libcublas, libcublasLt, libcusparse, libcusolver, libcusolverMg, libcurand
 
 function __init__()
@@ -559,9 +442,6 @@ function __init__()
 
     try
         # binaries
-        global ptxas_path = get_binary(dirs, "ptxas")
-        global nvdisasm_path = get_binary(dirs, "nvdisasm")
-        global nvlink_path = get_binary(dirs, "nvlink")
         global compute_sanitizer_path = get_binary(dirs, "compute-sanitizer")
 
         # libraries
@@ -577,10 +457,6 @@ function __init__()
         global libnvperf_host = get_library(dirs, "nvperf_host")
         global libnvperf_target = get_library(dirs, "nvperf_target")
 
-        # files
-        global libcudadevrt = get_libcudadevrt(dirs)
-        global libdevice = get_libdevice(dirs)
-
         available[] = true
     catch err
         @error """Could not (fully) discover the local CUDA toolkit; one or more pieces may be missing.
@@ -591,7 +467,7 @@ function __init__()
     end
 end
 
-for binary in ["ptxas", "nvdisasm", "nvlink"]
+for binary in ["compute-sanitizer"]
     name = Symbol(binary)
     path = Symbol(binary, "_path")
     @eval begin
