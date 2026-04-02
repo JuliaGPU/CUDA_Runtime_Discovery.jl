@@ -543,6 +543,13 @@ function get_libdevice(dirs)
     end
 end
 
+function get_compiler_version()
+    # Assumes we have ptxas_path already
+    output = readchomp(`$ptxas_path --version`)
+    version = match(r"release (\d*\.\d*)", output)
+    return version[1]
+end
+
 const available = Ref{Bool}(false)
 is_available() = available[]
 
@@ -579,6 +586,7 @@ function __init__()
         global libcudadevrt = get_libcudadevrt(dirs)
         global libdevice = get_libdevice(dirs)
 
+        global cuda_version = get_compiler_version()
         available[] = true
     catch err
         @error """Could not (fully) discover the local CUDA toolkit; one or more pieces may be missing.
