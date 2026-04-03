@@ -547,7 +547,7 @@ function get_compiler_version()
     # Assumes we have ptxas_path already
     output = readchomp(`$ptxas_path --version`)
     version = match(r"release (\d*\.\d*)", output)
-    return version[1]
+    return VersionNumber(version[1])
 end
 
 const available = Ref{Bool}(false)
