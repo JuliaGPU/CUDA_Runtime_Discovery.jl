@@ -564,7 +564,6 @@ function __init__()
 
     try
         # binaries
-        global var"compute-sanitizer_path" = get_binary(dirs, "compute-sanitizer")
         global ptxas_path = get_binary(dirs, "ptxas")
         global nvdisasm_path = get_binary(dirs, "nvdisasm")
         global nvlink_path = get_binary(dirs, "nvlink")
@@ -597,7 +596,7 @@ function __init__()
     end
 end
 
-for binary in ["ptxas", "nvdisasm", "nvlink", "compute-sanitizer"]
+for binary in ["ptxas", "nvdisasm", "nvlink"]
     name = Symbol(binary)
     path = Symbol(binary, "_path")
     @eval begin
