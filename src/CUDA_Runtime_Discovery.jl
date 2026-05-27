@@ -548,7 +548,6 @@ export ptxas, nvdisasm, nvlink,
 
 function __init__()
     dirs = find_toolkit()
-    print("WOW $(dirs)")
     isempty(dirs) && return
     try
         # binaries
@@ -568,7 +567,7 @@ function __init__()
         global libcupti = get_library(dirs, "cupti")
         global libnvperf_host = get_library(dirs, "nvperf_host")
         global libnvperf_target = get_library(dirs, "nvperf_target")
-        global libnvvm = get_libarary(dirs, "nvvm")
+        global libnvvm = get_library(dirs, "nvvm")
 
         # files
         global libcudadevrt = get_libcudadevrt(dirs)
