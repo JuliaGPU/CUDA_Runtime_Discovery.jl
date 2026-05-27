@@ -543,13 +543,13 @@ is_available() = available[]
 
 export ptxas, nvdisasm, nvlink,
        libcudadevrt, libdevice,
-       libcudart, libcupti, libnvperf_host, libnvperf_target,
+       libcudart, libcupti, libnvperf_host, libnvperf_target, libnvvm,
        libcufft, libcublas, libcublasLt, libcusparse, libcusolver, libcusolverMg, libcurand
 
 function __init__()
     dirs = find_toolkit()
+    print("WOW $(dirs)")
     isempty(dirs) && return
-
     try
         # binaries
         global ptxas_path = get_binary(dirs, "ptxas")
@@ -568,6 +568,7 @@ function __init__()
         global libcupti = get_library(dirs, "cupti")
         global libnvperf_host = get_library(dirs, "nvperf_host")
         global libnvperf_target = get_library(dirs, "nvperf_target")
+        global libnvvm = get_libarary(dirs, "nvvm")
 
         # files
         global libcudadevrt = get_libcudadevrt(dirs)
