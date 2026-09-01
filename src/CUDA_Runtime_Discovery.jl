@@ -562,7 +562,11 @@ function __init__()
         global libcublasLt = get_library(dirs, "cublasLt")
         global libcusparse = get_library(dirs, "cusparse")
         global libcusolver = get_library(dirs, "cusolver")
-        global libcusolverMg = get_library(dirs, "cusolverMg")
+        # cuSOLVERMg is not included in every toolkit, notably CUDA 10.x on Tegra.
+        path = get_library(dirs, "cusolverMg"; optional=true)
+        if path !== nothing
+            global libcusolverMg = path
+        end
         global libcurand = get_library(dirs, "curand")
         global libcupti = get_library(dirs, "cupti")
         global libnvperf_host = get_library(dirs, "nvperf_host")
