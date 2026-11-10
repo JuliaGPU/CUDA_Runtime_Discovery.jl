@@ -97,22 +97,8 @@ function library_names(name::String, versions::Vector=[])
     return names
 end
 
-"""
-    find_library(name, versions; locations=String[])
-
-Wrapper for Libdl.find_library, performing a more exhaustive search:
-
-- variants of the library name (including version numbers, platform-specific tags, etc);
-- various subdirectories of the `locations` list, and finally system library directories.
-
-Returns the full path to the library.
-"""
-function find_library(name::String, versions::Vector=[];
-                      locations::Vector{String}=String[])
-    # figure out names
-    all_names = library_names(name, versions)
-
-    # figure out locations
+# subdirectories of `locations` where libraries may be installed
+function library_locations(locations::Vector{String})
     all_locations = String[]
     for location in locations
         push!(all_locations, location)
@@ -132,6 +118,26 @@ function find_library(name::String, versions::Vector=[];
             push!(all_locations, joinpath(location, "targets", "$arch-linux", "lib")) # NVHPC SDK
         end
     end
+    return all_locations
+end
+
+"""
+    find_library(name, versions; locations=String[])
+
+Wrapper for Libdl.find_library, performing a more exhaustive search:
+
+- variants of the library name (including version numbers, platform-specific tags, etc);
+- various subdirectories of the `locations` list, and finally system library directories.
+
+Returns the full path to the library.
+"""
+function find_library(name::String, versions::Vector=[];
+                      locations::Vector{String}=String[])
+    # figure out names
+    all_names = library_names(name, versions)
+
+    # figure out locations
+    all_locations = library_locations(locations)
 
     @debug "Looking for library $name, $(join_versions(versions)), $(join_locations(locations))" all_names all_locations
     name_found = Libdl.find_library(all_names, all_locations)
@@ -144,6 +150,54 @@ function find_library(name::String, versions::Vector=[];
     path = Libdl.dlpath(name_found)
     @debug "Found $(basename(path)) at $(dirname(path))"
     return path
+end
+
+"""
+    versioned_dlls(name, dir)
+
+Return the versioned Windows DLLs of library `name` in `dir`, newest first. The version
+part of the file name is not predictable (e.g. `cupti64_2026.1.1.dll`, `cupti64_13.dll`,
+`nvvm64_40_0.dll`), so accept any sequence of numbers.
+"""
+function versioned_dlls(name::String, dir::String)
+    pattern = Regex("^\\Q$(name)\\E(?:$(Sys.WORD_SIZE))?_(\\d+(?:[._]\\d+)*)\\.dll\$", "i")
+    files = try
+        readdir(dir)
+    catch
+        # some systems disallow listing certain directories
+        String[]
+    end
+    candidates = Tuple{Vector{Int},String}[]
+    for file in files
+        m = match(pattern, file)
+        m === nothing && continue
+        version = parse.(Int, split(m[1], ('.', '_')))
+        push!(candidates, (version, joinpath(dir, file)))
+    end
+    sort!(candidates; by=first, rev=true)
+    return map(last, candidates)
+end
+
+"""
+    find_versioned_dll(name; locations=String[])
+
+Look for any versioned Windows DLL of library `name` in subdirectories of `locations`,
+returning the full path to the newest one that can be loaded, from the first location that
+has a loadable one.
+"""
+function find_versioned_dll(name::String; locations::Vector{String}=String[])
+    all_locations = filter(isdir, library_locations(locations))
+    @debug "Looking for any versioned DLL of $name $(join_locations(locations))" all_locations
+    for location in all_locations, path in versioned_dlls(name, location)
+        handle = Libdl.dlopen_e(path)
+        if handle != C_NULL
+            Libdl.dlclose(handle)
+            @debug "Found $(basename(path)) at $(dirname(path))"
+            return path
+        end
+    end
+    @debug "Did not find $name"
+    return nothing
 end
 
 """
@@ -314,7 +368,12 @@ end
 # looking up name aliases and known version numbers
 # and passing the (optional) toolkit dirs as locations.
 function find_cuda_library(toolkit_dirs::Vector{String}, library::String, versions::Vector)
-    # figure out the location
+    find_library(library, versions; locations=cuda_library_locations(toolkit_dirs, library))
+end
+function find_cuda_versioned_dll(toolkit_dirs::Vector{String}, library::String)
+    find_versioned_dll(library; locations=cuda_library_locations(toolkit_dirs, library))
+end
+function cuda_library_locations(toolkit_dirs::Vector{String}, library::String)
     locations = copy(toolkit_dirs)
     ## CUPTI (and related libraries) are in the "extras" directory of the toolkit
     if library in ("cupti", "nvperf_host", "nvperf_target")
@@ -329,7 +388,7 @@ function find_cuda_library(toolkit_dirs::Vector{String}, library::String, versio
         end
     end
 
-    find_library(library, versions; locations)
+    return locations
 end
 function find_cuda_binary(toolkit_dirs::Vector{String}, name::String)
     # figure out the location
@@ -502,6 +561,12 @@ function get_library(dirs, name; optional=false)
     if path === nothing
         versions = cuda_library_versions(name)
         path = find_cuda_library(dirs, name, versions)
+    end
+
+    # Windows DLL names carry versions we cannot enumerate (CUPTI uses year-based ones),
+    # so finally accept any versioned DLL in the toolkit
+    if path === nothing && Sys.iswindows()
+        path = find_cuda_versioned_dll(dirs, name)
     end
 
     if path !== nothing
